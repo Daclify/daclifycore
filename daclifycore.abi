@@ -302,6 +302,40 @@
             ]
         },
         {
+            "name": "ipayroll",
+            "base": "",
+            "fields": [
+                {
+                    "name": "sender_module_name",
+                    "type": "name"
+                },
+                {
+                    "name": "payroll_tag",
+                    "type": "name"
+                },
+                {
+                    "name": "payments",
+                    "type": "payment[]"
+                },
+                {
+                    "name": "due_date",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "repeat",
+                    "type": "uint8"
+                },
+                {
+                    "name": "recurrence_sec",
+                    "type": "uint64"
+                },
+                {
+                    "name": "auto_pay",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
             "name": "isetcusts",
             "base": "",
             "fields": [
@@ -322,6 +356,10 @@
                 {
                     "name": "slave_permission",
                     "type": "permission_level"
+                },
+                {
+                    "name": "has_contract",
+                    "type": "bool"
                 }
             ]
         },
@@ -402,6 +440,10 @@
                 {
                     "name": "parent",
                     "type": "name"
+                },
+                {
+                    "name": "has_contract",
+                    "type": "bool"
                 }
             ]
         },
@@ -416,6 +458,20 @@
                 {
                     "name": "value",
                     "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "payment",
+            "base": "",
+            "fields": [
+                {
+                    "name": "receiver",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "asset"
                 }
             ]
         },
@@ -771,6 +827,11 @@
         {
             "name": "invitecust",
             "type": "invitecust",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "ipayroll",
+            "type": "ipayroll",
             "ricardian_contract": ""
         },
         {

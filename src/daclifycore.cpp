@@ -462,7 +462,7 @@ ACTION daclifycore::delprofile(name actor){
   }
 }
 
-ACTION daclifycore::linkmodule(name module_name, permission_level slave_permission){
+ACTION daclifycore::linkmodule(name module_name, permission_level slave_permission, bool has_contract){
   require_auth(get_self() );
   modules_table _modules(get_self(), get_self().value);
   auto itr = _modules.find(module_name.value);
@@ -475,6 +475,7 @@ ACTION daclifycore::linkmodule(name module_name, permission_level slave_permissi
       n.module_name = module_name;
       n.parent = get_self();
       n.slave_permission = slave_permission;
+      n.has_contract = has_contract;
   });
 }
 ACTION daclifycore::unlinkmodule(name module_name){
@@ -508,6 +509,29 @@ ACTION daclifycore::setuiframe(uint64_t frame_id, vector<uint64_t>comp_ids, stri
         n.data = data;
     });  
   }
+}
+
+ACTION daclifycore::ipayroll(name sender_module_name, name payroll_tag, vector<payment> payments, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay){
+  modules_table _modules(get_self(), get_self().value);
+  auto payroll_module = _modules.get(name("payroll").value, "payroll module not available");
+  auto module_sender = _modules.get(sender_module_name.value, "Module that tries to use the payroll interface doesn't exist.");
+  require_auth(module_sender.slave_permission.actor);
+
+  //(name payroll_tag, vector<payment> payments, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay)
+  action(
+    payroll_module.slave_permission,
+    payroll_module.slave_permission.actor,
+    "addmany"_n,
+    std::make_tuple(
+      payroll_tag,
+      payments,
+      due_date,
+      repeat,
+      recurrence_sec,
+      auto_pay
+    )
+  ).send();
+  
 }
 
 

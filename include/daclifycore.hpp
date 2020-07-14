@@ -31,6 +31,11 @@ CONTRACT daclifycore : public contract {
       uint64_t member_count;
     };
 
+    struct payment{
+        eosio::name receiver;
+        eosio::asset amount;
+    };
+
     //json
     /*
         {
@@ -74,7 +79,11 @@ CONTRACT daclifycore : public contract {
 
     ACTION invitecust(name account);
     ACTION removecust(name account);
+
     ACTION isetcusts(vector<name> accounts);//"elections" module interface action
+
+    //(name payroll_tag, vector<payment> payments, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay)
+    ACTION ipayroll(name sender_module_name, name payroll_tag, vector<payment> payments, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay);
 
     ACTION propose(name proposer, string title, string description, vector<action> actions, time_point_sec expiration);
     ACTION approve(name approver, uint64_t id);
@@ -90,7 +99,7 @@ CONTRACT daclifycore : public contract {
     //ACTION addchildac(name account, name parent, name module_name);
    // ACTION remchildac(name account);
 
-    ACTION linkmodule(name module_name, permission_level slave_permission);
+    ACTION linkmodule(name module_name, permission_level slave_permission, bool has_contract);
     ACTION unlinkmodule(name module_name);
 
     ACTION setuiframe(uint64_t frame_id, vector<uint64_t>comp_ids, string data);
@@ -258,12 +267,31 @@ CONTRACT daclifycore : public contract {
       name module_name;
       permission_level slave_permission;
       name parent;
+      bool has_contract;
       auto primary_key() const { return module_name.value; }
       uint64_t by_module_acc() const { return slave_permission.actor.value; }
     };
     typedef multi_index<name("modules"), modules,
       eosio::indexed_by<"bymoduleacc"_n, eosio::const_mem_fun<modules, uint64_t, &modules::by_module_acc>>
     > modules_table;
+
+/*
+    //hooks table can only be populated if hook module is linked
+    TABLE hooks {
+      uint64_t hook_id;
+      name hook_action;// must be the action name on which to apply the hook
+      name hook_contract;// must be the contract where the hook_action is
+      vector<eosio::action> after_actions;
+      bool enabled;
+      uint64_t exec_count;
+      time_point_sec last_exec;
+      auto primary_key() const { return hook_id; }
+      uint128_t by_hook() const { return (uint128_t{hook_action.value} << 64) | hook_contract.value; }
+    };
+    typedef multi_index<name("hooks"), hooks,
+      eosio::indexed_by<"byhook"_n, eosio::const_mem_fun<hooks, uint128_t, &hooks::by_hook>>
+    > hooks_table;
+*/
 
     //functions//
     groupconf get_group_conf();
