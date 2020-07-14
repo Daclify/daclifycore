@@ -83,7 +83,7 @@ CONTRACT daclifycore : public contract {
     ACTION isetcusts(vector<name> accounts);//"elections" module interface action
 
     //(name payroll_tag, vector<payment> payments, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay)
-    ACTION ipayroll(name sender_module_name, name payroll_tag, vector<payment> payments, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay);
+    ACTION ipayroll(name sender_module_name, name payroll_tag, vector<payment> payments, string memo, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay);
 
     ACTION propose(name proposer, string title, string description, vector<action> actions, time_point_sec expiration);
     ACTION approve(name approver, uint64_t id);

@@ -318,6 +318,10 @@
                     "type": "payment[]"
                 },
                 {
+                    "name": "memo",
+                    "type": "string"
+                },
+                {
                     "name": "due_date",
                     "type": "time_point_sec"
                 },

@@ -511,7 +511,7 @@ ACTION daclifycore::setuiframe(uint64_t frame_id, vector<uint64_t>comp_ids, stri
   }
 }
 
-ACTION daclifycore::ipayroll(name sender_module_name, name payroll_tag, vector<payment> payments, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay){
+ACTION daclifycore::ipayroll(name sender_module_name, name payroll_tag, vector<payment> payments, string memo, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay){
   modules_table _modules(get_self(), get_self().value);
   auto payroll_module = _modules.get(name("payroll").value, "payroll module not available");
   auto module_sender = _modules.get(sender_module_name.value, "Module that tries to use the payroll interface doesn't exist.");
@@ -525,6 +525,7 @@ ACTION daclifycore::ipayroll(name sender_module_name, name payroll_tag, vector<p
     std::make_tuple(
       payroll_tag,
       payments,
+      memo,
       due_date,
       repeat,
       recurrence_sec,
