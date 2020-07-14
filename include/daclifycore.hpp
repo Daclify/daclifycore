@@ -250,18 +250,6 @@ CONTRACT daclifycore : public contract {
     };
     typedef multi_index<name("uiframes"), uiframes> uiframes_table;
     
-
-    TABLE childaccounts {
-      name account_name;
-      name parent;
-      name module_name;
-      auto primary_key() const { return account_name.value; }
-      uint64_t by_module_name() const { return module_name.value; }
-    };
-    typedef multi_index<name("childaccount"), childaccounts,
-      eosio::indexed_by<"bymodulename"_n, eosio::const_mem_fun<childaccounts, uint64_t, &childaccounts::by_module_name>>
-    > childaccounts_table;
-
     TABLE modules {
 
       name module_name;

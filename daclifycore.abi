@@ -82,24 +82,6 @@
             ]
         },
         {
-            "name": "childaccounts",
-            "base": "",
-            "fields": [
-                {
-                    "name": "account_name",
-                    "type": "name"
-                },
-                {
-                    "name": "parent",
-                    "type": "name"
-                },
-                {
-                    "name": "module_name",
-                    "type": "name"
-                }
-            ]
-        },
-        {
             "name": "clearbals",
             "base": "",
             "fields": [
@@ -930,13 +912,6 @@
         {
             "name": "balances",
             "type": "balances",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "childaccount",
-            "type": "childaccounts",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

@@ -409,18 +409,7 @@ void daclifycore::archive_proposal(const name& archive_type, proposals_table& id
 
 }
 
-bool daclifycore::has_module(const name& module_name){
 
-  childaccounts_table _childaccounts(get_self(), get_self().value);
-  auto by_module_name = _childaccounts.get_index<"bymodulename"_n>();
-  auto itr = by_module_name.find(module_name.value); //use get here
-  if(itr == by_module_name.end()){
-    return false;
-  }
-  else{
-    return true;
-  }
-}
 
 
 
