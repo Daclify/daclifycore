@@ -138,6 +138,28 @@
             ]
         },
         {
+            "name": "dacfiles",
+            "base": "",
+            "fields": [
+                {
+                    "name": "version",
+                    "type": "uint64"
+                },
+                {
+                    "name": "trx_id",
+                    "type": "checksum256"
+                },
+                {
+                    "name": "block_num",
+                    "type": "uint32"
+                },
+                {
+                    "name": "published",
+                    "type": "time_point_sec"
+                }
+            ]
+        },
+        {
             "name": "delprofile",
             "base": "",
             "fields": [
@@ -158,6 +180,56 @@
                 {
                     "name": "id",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "filedelete",
+            "base": "",
+            "fields": [
+                {
+                    "name": "file_scope",
+                    "type": "name"
+                },
+                {
+                    "name": "version",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "filepublish",
+            "base": "",
+            "fields": [
+                {
+                    "name": "file_scope",
+                    "type": "name"
+                },
+                {
+                    "name": "trx_id",
+                    "type": "checksum256"
+                },
+                {
+                    "name": "block_num",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "fileupload",
+            "base": "",
+            "fields": [
+                {
+                    "name": "uploader",
+                    "type": "name"
+                },
+                {
+                    "name": "file_scope",
+                    "type": "name"
+                },
+                {
+                    "name": "content",
+                    "type": "string"
                 }
             ]
         },
@@ -398,11 +470,11 @@
                     "type": "name"
                 },
                 {
-                    "name": "agreement_date",
+                    "name": "member_since",
                     "type": "time_point_sec"
                 },
                 {
-                    "name": "r1",
+                    "name": "agreed_userterms_version",
                     "type": "uint64"
                 },
                 {
@@ -612,6 +684,20 @@
             ]
         },
         {
+            "name": "signuserterm",
+            "base": "",
+            "fields": [
+                {
+                    "name": "member",
+                    "type": "name"
+                },
+                {
+                    "name": "agree_terms",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
             "name": "threshlinks",
             "base": "",
             "fields": [
@@ -801,6 +887,21 @@
             "ricardian_contract": ""
         },
         {
+            "name": "filedelete",
+            "type": "filedelete",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "filepublish",
+            "type": "filepublish",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "fileupload",
+            "type": "fileupload",
+            "ricardian_contract": ""
+        },
+        {
             "name": "imalive",
             "type": "imalive",
             "ricardian_contract": ""
@@ -858,6 +959,11 @@
         {
             "name": "setuiframe",
             "type": "setuiframe",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "signuserterm",
+            "type": "signuserterm",
             "ricardian_contract": ""
         },
         {
@@ -933,6 +1039,13 @@
         {
             "name": "custodians",
             "type": "custodians",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "dacfiles",
+            "type": "dacfiles",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

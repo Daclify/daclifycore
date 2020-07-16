@@ -7,10 +7,10 @@ daclifycore::groupconf daclifycore::get_group_conf(){
 }
 
 bool daclifycore::is_member(const name& accountname){
-  if(accountname == name(0) ){
+  if(accountname.value == 0 ){
     return false;
   }
-  if(accountname == get_self() ){
+  else if(accountname == get_self() ){
     return true; 
   }
   members_table _members(get_self(), get_self().value);
@@ -20,6 +20,7 @@ bool daclifycore::is_member(const name& accountname){
     return false;
   }
   else{
+    //check if signed userterms
     return true;
   }
 

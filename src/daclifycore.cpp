@@ -390,8 +390,38 @@ ACTION daclifycore::regmember(name actor){
 
   _members.emplace( actor, [&]( auto& n){
     n.account = actor;
+    n.member_since = time_point_sec(current_time_point() );
   });
   update_member_count(1);
+}
+
+ACTION daclifycore::signuserterm(name member, bool agree_terms){
+  require_auth(member);
+  groupconf conf = get_group_conf();
+  check(conf.userterms, "Userterms disabled.");
+
+  members_table _members(get_self(), get_self().value);
+  auto mem_itr = _members.find(member.value);
+  check(mem_itr != _members.end(), "Must register before signing the userterms.");
+
+  dacfiles_table _dacfiles(get_self(), name("userterms").value);
+  auto latest_terms = _dacfiles.begin();
+  check(latest_terms != _dacfiles.end(), "Userterms enabled but no file published yet in dacfiles usertems");
+
+  uint64_t updated_agreed_version;
+
+  if(agree_terms){
+    check(mem_itr->agreed_userterms_version < latest_terms->version, "Member already agreed the latest userterms version "+to_string(mem_itr->agreed_userterms_version) );
+    updated_agreed_version = latest_terms->version;
+  }
+  else{
+    updated_agreed_version = 0;
+  }
+
+  _members.modify( mem_itr, same_payer, [&]( auto& n) {
+      n.agreed_userterms_version = updated_agreed_version;
+  });  
+
 }
 
 
@@ -533,6 +563,36 @@ ACTION daclifycore::ipayroll(name sender_module_name, name payroll_tag, vector<p
     )
   ).send();
   
+}
+
+//this action just adds content to the action trace
+ACTION daclifycore::fileupload(name uploader, name file_scope, string content){
+  require_auth(uploader);
+
+}
+//this action populates the dacfiles table with upload references
+ACTION daclifycore::filepublish(name file_scope, checksum256 trx_id, uint32_t block_num){
+  require_auth(get_self() );
+  check(file_scope.value != 0, "must supply a non empty file_scope");
+  checksum256 test;
+  check(test != trx_id, "Must supply the transaction id pointing to the uploaded content");
+
+  dacfiles_table _dacfiles(get_self(), file_scope.value);
+  uint64_t version = _dacfiles.available_primary_key() == 0 ? 1 : _dacfiles.available_primary_key();
+  _dacfiles.emplace( get_self(), [&]( auto& n){
+      n.version = version;
+      n.trx_id = trx_id;
+      n.block_num = block_num;
+      n.published = time_point_sec(current_time_point());
+  });
+}
+
+ACTION daclifycore::filedelete(name file_scope, uint64_t version){
+  require_auth(get_self() );
+  dacfiles_table _dacfiles(get_self(), file_scope.value);
+  auto itr = _dacfiles.find(version);
+  check(itr != _dacfiles.end(), "can't find version "+to_string(version)+" in file scope "+file_scope.to_string() );
+  _dacfiles.erase(itr);
 }
 
 
