@@ -592,8 +592,8 @@ ACTION daclifycore::filepublish(name file_scope, string title, checksum256 trx_i
 ACTION daclifycore::filedelete(name file_scope, uint64_t id){
   require_auth(get_self() );
   dacfiles_table _dacfiles(get_self(), file_scope.value);
-  _dacfiles.erase(_dacfiles.begin() );
-  return;
+  //_dacfiles.erase(_dacfiles.begin() );
+  //return;
   auto itr = _dacfiles.find(id);
   check(itr != _dacfiles.end(), "can't find id "+to_string(id)+" in file scope "+file_scope.to_string() );
   _dacfiles.erase(itr);
