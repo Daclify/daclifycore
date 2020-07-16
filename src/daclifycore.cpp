@@ -568,6 +568,8 @@ ACTION daclifycore::ipayroll(name sender_module_name, name payroll_tag, vector<p
 //this action just adds content to the action trace
 ACTION daclifycore::fileupload(name uploader, name file_scope, string content){
   require_auth(uploader);
+  check(file_scope.value != 0, "must supply a non empty file_scope");
+  check(content.size() != 0, "Content can't be empty");
 }
 //this action populates the dacfiles table with upload references
 ACTION daclifycore::filepublish(name file_scope, string title, checksum256 trx_id, uint32_t block_num){
