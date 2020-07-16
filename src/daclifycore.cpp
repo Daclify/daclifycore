@@ -579,9 +579,9 @@ ACTION daclifycore::filepublish(name file_scope, string title, checksum256 trx_i
   check(test != trx_id, "Must supply the transaction id pointing to the uploaded content");
 
   dacfiles_table _dacfiles(get_self(), file_scope.value);
-  uint64_t id = _dacfiles.available_primary_key() == 0 ? 1 : _dacfiles.available_primary_key();
+
   _dacfiles.emplace( get_self(), [&]( auto& n){
-      n.id = id;
+      n.id = _dacfiles.available_primary_key()+1;
       n.trx_id = trx_id;
       n.title = title;
       n.block_num = block_num;
