@@ -118,8 +118,8 @@ CONTRACT daclifycore : public contract {
     ACTION updateconf(groupconf new_conf, bool remove);
 
     ACTION fileupload(name uploader, name file_scope, string content);
-    ACTION filepublish(name file_scope, checksum256 trx_id, uint32_t block_num);
-    ACTION filedelete(name file_scope, uint64_t version);
+    ACTION filepublish(name file_scope, string title, checksum256 trx_id, uint32_t block_num);
+    ACTION filedelete(name file_scope, uint64_t id);
 
     //dev
     ACTION clearbals(name scope);
@@ -237,11 +237,12 @@ CONTRACT daclifycore : public contract {
 
     //scoped table (example: userterms)
     TABLE dacfiles {
-      uint64_t version;
+      uint64_t id;
+      string title;
       checksum256 trx_id;
       uint32_t block_num;
       time_point_sec published;
-      uint64_t primary_key()const { return static_cast<uint64_t>(UINT64_MAX - version); }
+      uint64_t primary_key()const { return static_cast<uint64_t>(UINT64_MAX - id); }
     };
     typedef multi_index<"dacfiles"_n, dacfiles> dacfiles_table;
 

@@ -411,8 +411,8 @@ ACTION daclifycore::signuserterm(name member, bool agree_terms){
   uint64_t updated_agreed_version;
 
   if(agree_terms){
-    check(mem_itr->agreed_userterms_version < latest_terms->version, "Member already agreed the latest userterms version "+to_string(mem_itr->agreed_userterms_version) );
-    updated_agreed_version = latest_terms->version;
+    check(mem_itr->agreed_userterms_version < latest_terms->id, "Member already agreed the latest userterms version "+to_string(mem_itr->agreed_userterms_version) );
+    updated_agreed_version = latest_terms->id;
   }
   else{
     updated_agreed_version = 0;
@@ -568,30 +568,30 @@ ACTION daclifycore::ipayroll(name sender_module_name, name payroll_tag, vector<p
 //this action just adds content to the action trace
 ACTION daclifycore::fileupload(name uploader, name file_scope, string content){
   require_auth(uploader);
-
 }
 //this action populates the dacfiles table with upload references
-ACTION daclifycore::filepublish(name file_scope, checksum256 trx_id, uint32_t block_num){
+ACTION daclifycore::filepublish(name file_scope, string title, checksum256 trx_id, uint32_t block_num){
   require_auth(get_self() );
   check(file_scope.value != 0, "must supply a non empty file_scope");
   checksum256 test;
   check(test != trx_id, "Must supply the transaction id pointing to the uploaded content");
 
   dacfiles_table _dacfiles(get_self(), file_scope.value);
-  uint64_t version = _dacfiles.available_primary_key() == 0 ? 1 : _dacfiles.available_primary_key();
+  uint64_t id = _dacfiles.available_primary_key() == 0 ? 1 : _dacfiles.available_primary_key();
   _dacfiles.emplace( get_self(), [&]( auto& n){
-      n.version = version;
+      n.id = id;
       n.trx_id = trx_id;
+      n.title = title;
       n.block_num = block_num;
       n.published = time_point_sec(current_time_point());
   });
 }
 
-ACTION daclifycore::filedelete(name file_scope, uint64_t version){
+ACTION daclifycore::filedelete(name file_scope, uint64_t id){
   require_auth(get_self() );
   dacfiles_table _dacfiles(get_self(), file_scope.value);
-  auto itr = _dacfiles.find(version);
-  check(itr != _dacfiles.end(), "can't find version "+to_string(version)+" in file scope "+file_scope.to_string() );
+  auto itr = _dacfiles.find(id);
+  check(itr != _dacfiles.end(), "can't find version "+to_string(id)+" in file scope "+file_scope.to_string() );
   _dacfiles.erase(itr);
 }
 

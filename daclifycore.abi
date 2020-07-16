@@ -142,8 +142,12 @@
             "base": "",
             "fields": [
                 {
-                    "name": "version",
+                    "name": "id",
                     "type": "uint64"
+                },
+                {
+                    "name": "title",
+                    "type": "string"
                 },
                 {
                     "name": "trx_id",
@@ -192,7 +196,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "version",
+                    "name": "id",
                     "type": "uint64"
                 }
             ]
@@ -204,6 +208,10 @@
                 {
                     "name": "file_scope",
                     "type": "name"
+                },
+                {
+                    "name": "title",
+                    "type": "string"
                 },
                 {
                     "name": "trx_id",
