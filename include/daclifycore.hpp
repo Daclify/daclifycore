@@ -242,9 +242,12 @@ CONTRACT daclifycore : public contract {
       checksum256 trx_id;
       uint32_t block_num;
       time_point_sec published;
-      uint64_t primary_key()const { return static_cast<uint64_t>(UINT64_MAX - id); }
+      uint64_t primary_key()const { return id; }
+      uint64_t by_published() const { return published.sec_since_epoch(); }
     };
-    typedef multi_index<"dacfiles"_n, dacfiles> dacfiles_table;
+    typedef multi_index<"dacfiles"_n, dacfiles,
+      eosio::indexed_by<"bypublished"_n, eosio::const_mem_fun<dacfiles, uint64_t, &dacfiles::by_published>>
+    > dacfiles_table;
 
 
     //scoped table
