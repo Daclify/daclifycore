@@ -377,20 +377,21 @@ CONTRACT daclifycore : public contract {
         auto mod_itr = _modules.find(eosio::name("hooks").value );
         if(mod_itr != _modules.end() ){
         
-            eosio::name hooks_contract = mod_itr->slave_permission.actor;
-            actionhooks_table _actionhooks(hooks_contract, hooks_contract.value);
-            auto by_hook = _actionhooks.get_index<"byhook"_n>();
-            uint128_t composite_id = (uint128_t{hooked_action.value} << 64) | self_.value;
-            auto hook_itr = by_hook.find(composite_id);
-            if(hook_itr != by_hook.end() ){
-                eosio::action(
-                    eosio::permission_level{ self_, "owner"_n },
-                    hooks_contract,
-                    hook_itr->hook_action_name,
-                    std::make_tuple( hooked_action )
-                ).send();
-            
+          eosio::name hooks_contract = mod_itr->slave_permission.actor;
+          actionhooks_table _actionhooks(hooks_contract, hooks_contract.value);
+           auto by_hook = _actionhooks.get_index<"byhook"_n>();
+          uint128_t composite_id = (uint128_t{hooked_action.value} << 64) | self_.value;
+          auto hook_itr = by_hook.find(composite_id);
+          if(hook_itr != by_hook.end() ){
+            if(hook_itr->enabled){
+              eosio::action(
+                  eosio::permission_level{ self_, "owner"_n },
+                  hooks_contract,
+                  hook_itr->hook_action_name,
+                  std::make_tuple( hooked_action )
+              ).send();
             }
+          }
         }
       }
 
