@@ -21,10 +21,12 @@ ACTION daclifycore::updateconf(groupconf new_conf, bool remove){
 ///////////////////////////////////
 ACTION daclifycore::propose(name proposer, string title, string description, vector<action> actions, time_point_sec expiration) {
   require_auth(proposer);
+  /*
   check(
     is_master_authorized_to_use_slave(permission_level(proposer, name("active")), permission_level(get_self(), name("active")) ),
     "You are not allowed to perform this action"
   );
+  */
   check(is_custodian(proposer, true, true), "You can't propose group actions because you are not a custodian.");
   time_point_sec now = time_point_sec(current_time_point());
 
