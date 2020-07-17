@@ -36,8 +36,11 @@ ACTION daclifycore::propose(name proposer, string title, string description, vec
   //find  max required threshold + assert when get_self@owner isn't in the authorization
   threshold_name_and_value max_required_threshold;
   for (std::vector<int>::size_type i = 0; i != actions.size(); i++){
+    if(actions[i].account == get_self() ){
+      check(actions[i].name != name("propose"), "can't propose a proposal on self.");
+    }
     threshold_name_and_value tnav = get_required_threshold_name_and_value_for_contract_action(actions[i].account, actions[i].name);
-    check(tnav.threshold >= 0, "Action is blocked via negative threshold");
+    check(tnav.threshold >= 0, "Action "+actions[i].name.to_string()+" is blocked via negative threshold");
     if(i==0){
       max_required_threshold = tnav;
     }
@@ -188,6 +191,9 @@ ACTION daclifycore::exec(name executer, uint64_t id) {
 ACTION daclifycore::invitecust(name account){
   require_auth(get_self() );
   check(account != get_self(), "Self can't be a custodian.");
+
+  //don't allow invitation of custodians when election module is installed
+  check(!has_module(name("elections")), "Can't invite a custodian when election module is linked.");
   
   auto conf = get_group_conf();
 

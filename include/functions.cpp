@@ -26,6 +26,12 @@ bool daclifycore::is_member(const name& accountname){
 
 }
 
+bool daclifycore::has_module(const name& module_name){
+  modules_table _modules(get_self(), get_self().value);
+  auto itr = _modules.find(module_name.value);
+  return itr != _modules.end();
+}
+
 bool daclifycore::member_has_balance(const name& accountname){
   balances_table _balances( get_self(), accountname.value);
   if(_balances.begin() != _balances.end() ){
@@ -35,6 +41,7 @@ bool daclifycore::member_has_balance(const name& accountname){
     return false;
   }
 }
+
 
 void daclifycore::update_member_count(int delta){
 
@@ -258,7 +265,6 @@ uint8_t daclifycore::get_threshold_by_name(const name& threshold_name){
 void daclifycore::insert_or_update_or_delete_threshold(const name& threshold_name, const int8_t& threshold, const bool& remove, const bool& privileged){
    thresholds_table _thresholds(get_self(), get_self().value);
    auto thresh_itr = _thresholds.find(threshold_name.value);
-
 
    bool is_linked = is_threshold_linked(threshold_name);
 
