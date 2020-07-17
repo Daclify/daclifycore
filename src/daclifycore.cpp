@@ -92,6 +92,8 @@ ACTION daclifycore::propose(name proposer, string title, string description, vec
     ).send();
   }
 
+  hookmanager(name("propose"), get_self() );
+
 }
 //////////////
 ACTION daclifycore::approve(name approver, uint64_t id) {
