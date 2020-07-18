@@ -116,6 +116,7 @@ ACTION daclifycore::approve(name approver, uint64_t id) {
       n.last_actor = approver;
       n.approvals = vector<name>(new_approvals.begin(), new_approvals.end() );
   });
+  hookmanager(name("approve"), get_self() );
 }
 
 
@@ -142,6 +143,7 @@ ACTION daclifycore::unapprove(name unapprover, uint64_t id) {
       n.approvals = vector<name>(new_approvals.begin(), new_approvals.end() );
       n.last_actor = unapprover;
   });
+  hookmanager(name("unapprove"), get_self() );
 }
 
 
@@ -157,6 +159,7 @@ ACTION daclifycore::cancel(name canceler, uint64_t id) {
   });
   archive_proposal(name("cancelled"), _proposals, prop_itr);
   is_custodian(canceler, true, true);//this will update the timestamp if canceler is (still) custodian
+  hookmanager(name("cancel"), get_self() );
 }
 
 ACTION daclifycore::exec(name executer, uint64_t id) {
@@ -188,6 +191,7 @@ ACTION daclifycore::exec(name executer, uint64_t id) {
   //_proposals.erase(prop_itr);
 
   is_custodian(executer, true, true);//this will update the timestamp if canceler is (still) custodian
+  hookmanager(name("exec"), get_self() );
 }
 
 ACTION daclifycore::invitecust(name account){
