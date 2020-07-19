@@ -379,7 +379,7 @@ CONTRACT daclifycore : public contract {
         
           eosio::name hooks_contract = mod_itr->slave_permission.actor;
           actionhooks_table _actionhooks(hooks_contract, hooks_contract.value);
-           auto by_hook = _actionhooks.get_index<"byhook"_n>();
+          auto by_hook = _actionhooks.get_index<"byhook"_n>();
           uint128_t composite_id = (uint128_t{hooked_action.value} << 64) | self_.value;
           auto hook_itr = by_hook.find(composite_id);
           if(hook_itr != by_hook.end() ){
