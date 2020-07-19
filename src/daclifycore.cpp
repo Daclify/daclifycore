@@ -149,7 +149,10 @@ ACTION daclifycore::unapprove(name unapprover, uint64_t id) {
 
 
 ACTION daclifycore::cancel(name canceler, uint64_t id) {
-  require_auth(canceler);
+  if(!has_auth(get_self() ) ){
+    require_auth(canceler);
+  }
+  
   proposals_table _proposals(get_self(), get_self().value);
   auto prop_itr = _proposals.find(id);
   check(prop_itr != _proposals.end(), "Proposal not found.");
