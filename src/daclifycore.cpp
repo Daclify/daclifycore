@@ -218,10 +218,18 @@ ACTION daclifycore::invitecust(name account){
 
   check(cust_itr == _custodians.end(), "Account already a custodian.");
 
+  corestate_table _corestate(get_self(), get_self().value);
+  auto state = _corestate.get_or_create(get_self(), corestate());
+
+
   _custodians.emplace( get_self(), [&]( auto& n){
       n.account = account;
+      n.last_active = state.state.cust_count==0 ? time_point_sec(current_time_point() ) : time_point_sec(0);
   });
-  update_custodian_count(1);
+
+  state.state.cust_count = state.state.cust_count + 1;
+  _corestate.set(state, get_self());
+  //update_custodian_count(1);
 }
 
 ACTION daclifycore::removecust(name account){

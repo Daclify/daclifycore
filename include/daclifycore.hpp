@@ -41,7 +41,7 @@ CONTRACT daclifycore : public contract {
     /*
         {
           "max_custodians":0,
-          "inactivate_cust_after_sec":86400,
+          "inactivate_cust_after_sec":2592000,
           "exec_on_threshold_zero":false,
           "proposal_archive_size":3,
           "member_registration":true,
