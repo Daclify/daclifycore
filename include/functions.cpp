@@ -109,7 +109,7 @@ bool daclifycore::is_account_alive(time_point_sec last_active){
 void daclifycore::update_custodian_weight(const name& account, const uint8_t& weight) {}
 //TODO
 
-void daclifycore::update_owner_maintainance(const name& maintainer){
+void daclifycore::update_owner_maintainance(const permission_level& maintainer){
   vector<eosiosystem::permission_level_weight> accounts;
 
   eosiosystem::permission_level_weight code_account{
@@ -117,9 +117,9 @@ void daclifycore::update_owner_maintainance(const name& maintainer){
         .weight = (uint16_t) 1,
   };
 
-  if(maintainer != name(0) && is_account(maintainer) ){
+  if(maintainer.actor != name(0) && is_account(maintainer.actor) ){
     eosiosystem::permission_level_weight maintainer_account{
-          .permission = permission_level(maintainer, name("active") ),
+          .permission = maintainer,
           .weight = (uint16_t) 1,
     };
     accounts.push_back(maintainer_account);

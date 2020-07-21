@@ -50,13 +50,14 @@ CONTRACT daclifycore : public contract {
           "withdrawals": true,
           "internal_transfers": false,
           "deposits": false,
-          "maintainer_account": "piecesnbits1",
+          "maintainer_account": {"actor": "piecesnbits1", "permission":"active"},
           "hub_account": "daclifyhub11",
           "r1": false,
           "r2": false,
           "r3": 0
         }
     */
+    //
 
     struct groupconf{
       uint8_t max_custodians = 0;
@@ -69,7 +70,7 @@ CONTRACT daclifycore : public contract {
       bool withdrawals = false;
       bool internal_transfers = false;
       bool deposits = false;
-      name maintainer_account = name("eosgroups222");//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      permission_level maintainer_account = permission_level(name("daclifyhub11"), name("active") );//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       name hub_account = name("daclifyhub11");
       
       bool r1;
@@ -287,7 +288,7 @@ CONTRACT daclifycore : public contract {
     //functions//
     groupconf get_group_conf();
     bool is_account_voice_wrapper(const name& account);
-    void update_owner_maintainance(const name& maintainer);
+    void update_owner_maintainance(const permission_level& maintainer);
     //action whitelist stuff
     
     //void update_whitelist_action(const name& contract, const name& action_name, const name& threshold_name);

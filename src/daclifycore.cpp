@@ -10,7 +10,7 @@ ACTION daclifycore::updateconf(groupconf new_conf, bool remove){
       return;
     }
     auto conf = _coreconf.get_or_default(coreconf());
-    if(conf.conf.maintainer_account != new_conf.maintainer_account){
+    if(conf.conf.maintainer_account.actor != new_conf.maintainer_account.actor || conf.conf.maintainer_account.permission != new_conf.maintainer_account.permission){
       update_owner_maintainance(new_conf.maintainer_account);
     }
     conf.conf = new_conf;
@@ -149,14 +149,19 @@ ACTION daclifycore::unapprove(name unapprover, uint64_t id) {
 
 
 ACTION daclifycore::cancel(name canceler, uint64_t id) {
-  if(!has_auth(get_self() ) ){
-    require_auth(canceler);
-  }
+
   
   proposals_table _proposals(get_self(), get_self().value);
   auto prop_itr = _proposals.find(id);
   check(prop_itr != _proposals.end(), "Proposal not found.");
-  check(prop_itr->proposer == canceler, "This is not your proposal.");
+
+  if(!has_auth(get_self() ) ){
+    require_auth(prop_itr->proposer);//only proposer can cancel
+  }
+  else{
+    canceler = get_self();
+  }
+  
   _proposals.modify( prop_itr, same_payer, [&]( auto& n) {
       n.last_actor = canceler;
   });
