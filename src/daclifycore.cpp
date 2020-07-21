@@ -224,7 +224,7 @@ ACTION daclifycore::invitecust(name account){
 
   _custodians.emplace( get_self(), [&]( auto& n){
       n.account = account;
-      n.last_active = state.state.cust_count==0 ? time_point_sec(current_time_point() ) : time_point_sec(0);
+      //n.last_active = state.state.cust_count==0 ? time_point_sec(current_time_point() ) : time_point_sec(0);
   });
 
   state.state.cust_count = state.state.cust_count + 1;
