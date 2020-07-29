@@ -117,6 +117,11 @@ void daclifycore::update_owner_maintainance(const permission_level& maintainer){
         .weight = (uint16_t) 1,
   };
 
+  eosiosystem::permission_level_weight self_active_account{
+        .permission = permission_level(get_self(), name("active") ),
+        .weight = (uint16_t) 1,
+  };
+
   if(maintainer.actor != name(0) && is_account(maintainer.actor) ){
     eosiosystem::permission_level_weight maintainer_account{
           .permission = maintainer,
@@ -124,8 +129,9 @@ void daclifycore::update_owner_maintainance(const permission_level& maintainer){
     };
     accounts.push_back(maintainer_account);
   }
-
+  accounts.push_back(self_active_account);
   accounts.push_back(code_account);
+  
 
   if(accounts.size() > 1){
     std::sort(accounts.begin(), accounts.end(), sort_authorization_by_name());

@@ -21,13 +21,11 @@ ACTION daclifycore::updateconf(groupconf new_conf, bool remove){
 ///////////////////////////////////
 ACTION daclifycore::propose(name proposer, string title, string description, vector<action> actions, time_point_sec expiration) {
   require_auth(proposer);
-  /*
-  check(
-    is_master_authorized_to_use_slave(permission_level(proposer, name("active")), permission_level(get_self(), name("active")) ),
-    "You are not allowed to perform this action"
-  );
-  */
-  check(is_custodian(proposer, true, true), "You can't propose group actions because you are not a custodian.");
+
+  if(proposer != get_self() ){ //allow get_self to propose
+    check(is_custodian(proposer, true, true), "You can't propose group actions because you are not a custodian.");
+  }
+  
   time_point_sec now = time_point_sec(current_time_point());
 
   //validate actions
@@ -63,6 +61,12 @@ ACTION daclifycore::propose(name proposer, string title, string description, vec
   uint32_t seconds_left = expiration.sec_since_epoch() - now.sec_since_epoch();
   check(seconds_left >= 60*60, "Minimum expiration not met.");
 
+  
+
+  vector<name>approvals;
+  if(proposer != get_self() ){
+    approvals.push_back(proposer);
+  }
   name ram_payer = get_self();
 
   proposals_table _proposals(get_self(), get_self().value);
@@ -70,7 +74,7 @@ ACTION daclifycore::propose(name proposer, string title, string description, vec
     n.id = _proposals.available_primary_key();
     n.proposer = proposer;
     n.actions = actions;
-    n.approvals = {proposer};
+    n.approvals = approvals;
     n.expiration = expiration;
     n.submitted = now;
     n.description = description;
@@ -221,15 +225,27 @@ ACTION daclifycore::invitecust(name account){
   corestate_table _corestate(get_self(), get_self().value);
   auto state = _corestate.get_or_create(get_self(), corestate());
 
+  //time_point_sec last_active = state.state.cust_count==0 ? time_point_sec(current_time_point() ) : time_point_sec(0);
 
-  _custodians.emplace( get_self(), [&]( auto& n){
-      n.account = account;
-      //n.last_active = state.state.cust_count==0 ? time_point_sec(current_time_point() ) : time_point_sec(0);
-  });
+  if(state.state.cust_count==0){
+    _custodians.emplace( get_self(), [&]( auto& n){
+        n.account = account;
+        n.last_active = time_point_sec(current_time_point() );
+    });
+    state.state.cust_count = state.state.cust_count + 1;
+    _corestate.set(state, get_self());
+    update_active();
+  
+  }
+  else{
+    _custodians.emplace( get_self(), [&]( auto& n){
+        n.account = account;
+    });
+    state.state.cust_count = state.state.cust_count + 1;
+    _corestate.set(state, get_self());
+  }
+  hookmanager(name("invitecust"), get_self() );
 
-  state.state.cust_count = state.state.cust_count + 1;
-  _corestate.set(state, get_self());
-  //update_custodian_count(1);
 }
 
 ACTION daclifycore::removecust(name account){
@@ -249,6 +265,7 @@ ACTION daclifycore::removecust(name account){
   else{
     check(false, "Can't remove the last custodian.");
   }
+  hookmanager(name("removecust"), get_self() );
 }
 
 ACTION daclifycore::imalive(name account){
@@ -263,6 +280,7 @@ ACTION daclifycore::imalive(name account){
   else{
     update_custodian_last_active(account);
   }
+  hookmanager(name("imalive"), get_self() );
 }
 
 ACTION daclifycore::isetcusts(vector<name> accounts){
@@ -321,6 +339,8 @@ ACTION daclifycore::isetcusts(vector<name> accounts){
   state.state.cust_count = count_new;
   _corestate.set(state, get_self());
 
+  hookmanager(name("isetcusts"), get_self() );
+
 }
 
 ACTION daclifycore::widthdraw(name account, extended_asset amount) {
@@ -336,7 +356,7 @@ ACTION daclifycore::widthdraw(name account, extended_asset amount) {
     amount.contract, "transfer"_n,
     make_tuple(get_self(), account, amount.quantity, string("withdraw from user account"))
   ).send();
-  
+  hookmanager(name("widthdraw"), get_self() );
 }
 
 ACTION daclifycore::internalxfr(name from, name to, extended_asset amount, string msg){
@@ -348,6 +368,7 @@ ACTION daclifycore::internalxfr(name from, name to, extended_asset amount, strin
   check(amount.quantity.amount > 0, "Transfer value must be greater then zero.");
   sub_balance(from, amount);
   add_balance(to, amount);
+  hookmanager(name("internalxfr"), get_self() );
 }
 
 ACTION daclifycore::manthreshold(name threshold_name, int8_t threshold, bool remove){
@@ -427,6 +448,7 @@ ACTION daclifycore::regmember(name actor){
     n.member_since = time_point_sec(current_time_point() );
   });
   update_member_count(1);
+  hookmanager(name("regmember"), get_self() );
 }
 
 ACTION daclifycore::signuserterm(name member, bool agree_terms){
@@ -439,8 +461,10 @@ ACTION daclifycore::signuserterm(name member, bool agree_terms){
   check(mem_itr != _members.end(), "Must register before signing the userterms.");
 
   dacfiles_table _dacfiles(get_self(), name("userterms").value);
-  auto latest_terms = _dacfiles.begin();
-  check(latest_terms != _dacfiles.end(), "Userterms enabled but no file published yet in dacfiles usertems");
+  auto latest_terms = _dacfiles.end();
+  check(latest_terms != _dacfiles.begin(), "Userterms enabled but no file published yet in dacfiles usertems");
+
+  --latest_terms;
 
   uint64_t updated_agreed_version;
 
@@ -455,6 +479,7 @@ ACTION daclifycore::signuserterm(name member, bool agree_terms){
   _members.modify( mem_itr, same_payer, [&]( auto& n) {
       n.agreed_userterms_version = updated_agreed_version;
   });  
+  hookmanager(name("signuserterm"), get_self() );
 
 }
 
@@ -467,6 +492,7 @@ ACTION daclifycore::unregmember(name actor){
   check(mem_itr != _members.end(), "Accountname is not a member.");
   _members.erase(mem_itr);
   update_member_count(-1);
+  hookmanager(name("unregmember"), get_self() );
 }
 
 ACTION daclifycore::updateavatar(name actor, string img_url){
@@ -541,6 +567,7 @@ ACTION daclifycore::linkmodule(name module_name, permission_level slave_permissi
       n.slave_permission = slave_permission;
       n.has_contract = has_contract;
   });
+  hookmanager(name("linkmodule"), get_self() );
 }
 ACTION daclifycore::unlinkmodule(name module_name){
   require_auth(get_self() );
@@ -548,6 +575,7 @@ ACTION daclifycore::unlinkmodule(name module_name){
   auto itr = _modules.find(module_name.value);
   check(itr != _modules.end(), "Module doesn't exists.");
   _modules.erase(itr);
+  hookmanager(name("unlinkmodule"), get_self() );
 
 }
 
@@ -573,6 +601,7 @@ ACTION daclifycore::setuiframe(uint64_t frame_id, vector<uint64_t>comp_ids, stri
         n.data = data;
     });  
   }
+  hookmanager(name("setuiframe"), get_self() );
 }
 
 ACTION daclifycore::ipayroll(name sender_module_name, name payroll_tag, vector<payment> payments, string memo, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay){
@@ -621,6 +650,7 @@ ACTION daclifycore::filepublish(name file_scope, string title, checksum256 trx_i
       n.block_num = block_num;
       n.published = time_point_sec(current_time_point());
   });
+  hookmanager(name("filepublish"), get_self() );
 }
 
 ACTION daclifycore::filedelete(name file_scope, uint64_t id){
@@ -631,6 +661,7 @@ ACTION daclifycore::filedelete(name file_scope, uint64_t id){
   auto itr = _dacfiles.find(id);
   check(itr != _dacfiles.end(), "can't find id "+to_string(id)+" in file scope "+file_scope.to_string() );
   _dacfiles.erase(itr);
+  hookmanager(name("filedelete"), get_self() );
 }
 
 
