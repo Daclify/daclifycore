@@ -278,6 +278,7 @@ CONTRACT daclifycore : public contract {
       permission_level slave_permission;
       name parent;
       bool has_contract;
+      bool enabled = true;
       auto primary_key() const { return module_name.value; }
       uint64_t by_module_acc() const { return slave_permission.actor.value; }
     };

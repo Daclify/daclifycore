@@ -510,6 +510,10 @@
                 {
                     "name": "has_contract",
                     "type": "bool"
+                },
+                {
+                    "name": "enabled",
+                    "type": "bool"
                 }
             ]
         },

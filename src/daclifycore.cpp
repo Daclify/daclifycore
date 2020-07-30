@@ -31,7 +31,7 @@ ACTION daclifycore::propose(name proposer, string title, string description, vec
   //validate actions
   check(actions.size() > 0 && actions.size() < 8, "Number of actions not allowed.");
 
-  //find  max required threshold + assert when get_self@owner isn't in the authorization
+  //find  max required threshold
   threshold_name_and_value max_required_threshold;
   for (std::vector<int>::size_type i = 0; i != actions.size(); i++){
     if(actions[i].account == get_self() ){
@@ -378,11 +378,15 @@ ACTION daclifycore::manthreshold(name threshold_name, int8_t threshold, bool rem
 
 ACTION daclifycore::manthreshlin(name contract, name action_name, name threshold_name, bool remove){
   require_auth(get_self() );
-  check(contract != name(0) && action_name != name(0), "Invalid link parameters.");
-  check(threshold_name != name(0), "Threshold name can't be empty.");
+
+  //the code can handle wildcards but disabled for now with these checks
+  //check(action_name.value != 0, "Can't wildcard action name.");//disable  contract::*
+  check(contract.value != 0, "Can't wildcard contract name.");//disable *::action 
+
+  check(threshold_name.value != 0, "Threshold name can't be empty.");
   check(threshold_name != name("default"), "Default threshold can't be assigned.");
 
-  if(contract != name(0) ){
+  if(contract.value != 0 ){
     check(is_account(contract), "Contract isn't an existing account.");
   }
   check(is_existing_threshold_name(threshold_name), "Threshold name doesn't exist. Create it first.");
@@ -394,16 +398,9 @@ ACTION daclifycore::manthreshlin(name contract, name action_name, name threshold
   auto link_itr = by_cont_act.find(composite_id);
 
   if(link_itr != by_cont_act.end() ){
-    //link already exists so modify or remove
+    //link already exists so remove
     if(remove){
       by_cont_act.erase(link_itr);
-    }
-    else{
-     check(link_itr->action_name != action_name, "Action or contract already linked with this threshold");
-      by_cont_act.modify( link_itr, same_payer, [&]( auto& n) {
-          n.action_name = action_name;
-          n.threshold_name = threshold_name;
-      });   
     }
   }
   else{
@@ -556,10 +553,11 @@ ACTION daclifycore::linkmodule(name module_name, permission_level slave_permissi
   require_auth(get_self() );
   modules_table _modules(get_self(), get_self().value);
   auto itr = _modules.find(module_name.value);
-  check(module_name.value !=0, "Module name must be specified");
-  check(itr == _modules.end(), "Account is already registered as module.");
-  check(is_account(slave_permission.actor), "Is not an existing account");
-  permission_level master= permission_level(get_self(), name("owner") );
+  check(module_name.value != 0, "Module name must be specified");
+  check(itr == _modules.end(), "Duplicate module name.");
+  check(is_account(slave_permission.actor), "Actor is not an existing account");
+  check(slave_permission.permission.value != 0, "Permission can't be empty");
+  permission_level master = permission_level(get_self(), name("owner") );
   check(is_master_authorized_to_use_slave(master, slave_permission), "Core contract is not allowed to use module, fix permissions on module contract");
   _modules.emplace( get_self(), [&]( auto& n){
       n.module_name = module_name;
@@ -569,6 +567,7 @@ ACTION daclifycore::linkmodule(name module_name, permission_level slave_permissi
   });
   hookmanager(name("linkmodule"), get_self() );
 }
+
 ACTION daclifycore::unlinkmodule(name module_name){
   require_auth(get_self() );
   modules_table _modules(get_self(), get_self().value);
@@ -576,7 +575,6 @@ ACTION daclifycore::unlinkmodule(name module_name){
   check(itr != _modules.end(), "Module doesn't exists.");
   _modules.erase(itr);
   hookmanager(name("unlinkmodule"), get_self() );
-
 }
 
 ACTION daclifycore::setuiframe(uint64_t frame_id, vector<uint64_t>comp_ids, string data){
@@ -601,16 +599,31 @@ ACTION daclifycore::setuiframe(uint64_t frame_id, vector<uint64_t>comp_ids, stri
         n.data = data;
     });  
   }
-  hookmanager(name("setuiframe"), get_self() );
+
 }
 
-ACTION daclifycore::ipayroll(name sender_module_name, name payroll_tag, vector<payment> payments, string memo, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay){
+//interface for payroll
+ACTION daclifycore::ipayroll(
+                      name sender_module_name, 
+                      name payroll_tag, 
+                      vector<payment> payments, 
+                      string memo, 
+                      time_point_sec due_date, 
+                      uint8_t repeat, 
+                      uint64_t recurrence_sec, 
+                      bool auto_pay
+                    ){
+
+  /* all modules are allowed to call the payroll interface */
   modules_table _modules(get_self(), get_self().value);
   auto payroll_module = _modules.get(name("payroll").value, "payroll module not available");
   auto module_sender = _modules.get(sender_module_name.value, "Module that tries to use the payroll interface doesn't exist.");
   require_auth(module_sender.slave_permission.actor);
 
-  //(name payroll_tag, vector<payment> payments, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay)
+  //only allow inline calls
+  //check(get_sender() == module_sender.slave_permission.actor, "Only inline calls allowed");
+
+  //name payroll_tag, vector<payment> payments, time_point_sec due_date, uint8_t repeat, uint64_t recurrence_sec, bool auto_pay
   action(
     payroll_module.slave_permission,
     payroll_module.slave_permission.actor,
@@ -634,6 +647,7 @@ ACTION daclifycore::fileupload(name uploader, name file_scope, string content){
   check(file_scope.value != 0, "must supply a non empty file_scope");
   check(content.size() != 0, "Content can't be empty");
 }
+
 //this action populates the dacfiles table with upload references
 ACTION daclifycore::filepublish(name file_scope, string title, checksum256 trx_id, uint32_t block_num){
   require_auth(get_self() );
@@ -656,8 +670,6 @@ ACTION daclifycore::filepublish(name file_scope, string title, checksum256 trx_i
 ACTION daclifycore::filedelete(name file_scope, uint64_t id){
   require_auth(get_self() );
   dacfiles_table _dacfiles(get_self(), file_scope.value);
-  //_dacfiles.erase(_dacfiles.begin() );
-  //return;
   auto itr = _dacfiles.find(id);
   check(itr != _dacfiles.end(), "can't find id "+to_string(id)+" in file scope "+file_scope.to_string() );
   _dacfiles.erase(itr);
@@ -665,137 +677,11 @@ ACTION daclifycore::filedelete(name file_scope, uint64_t id){
 }
 
 
-
-/*
-
-ACTION daclifycore::spawnchildac(name new_account, asset ram_amount, asset net_amount, asset cpu_amount, name parent, name module_name){
-    require_auth(get_self() );
-    check(!is_account(new_account), "The chosen accountname is already taken.");
-
-    asset total_value = ram_amount + net_amount + cpu_amount;
-    extended_asset extended_total_value = extended_asset(total_value, name("eosio.token") );
-    sub_balance( get_self(), extended_total_value);
-
-    parent = parent == name(0) ? get_self() : parent;
-
-    bool transfer_bw = false;
-
-    vector<eosiosystem::permission_level_weight> controller_accounts_active;
-    vector<eosiosystem::permission_level_weight> controller_accounts_owner;
-
-
-    permission_level parent_active{parent, "active"_n};
-    //permission_level code_permission{new_account, name("eosio.code") };
-
-
-    eosiosystem::permission_level_weight pmlw_parent_active{
-        .permission = parent_active,
-        .weight = (uint16_t) 1,
-    };
-
-   //eosiosystem::permission_level_weight pmlw_eosiocode{
-      //  .permission = code_permission,
-       // .weight = (uint16_t) 1,
-    //};
-    //controller_accounts_owner.push_back(pmlw_eosiocode);
-    
-
-    controller_accounts_owner.push_back(pmlw_parent_active);
-    controller_accounts_active.push_back(pmlw_parent_active);
-
-    eosiosystem::authority active_authority{
-        .threshold = 1,
-        .accounts = controller_accounts_active,
-        .waits = {},
-        .keys = {}
-    };
-
-    eosiosystem::authority owner_authority{
-        .threshold = 1,
-        .accounts = controller_accounts_owner,
-        .waits = {},
-        .keys = {}
-    };
-
-    //create new account
-    action(
-        permission_level{ get_self(), "owner"_n },
-        "eosio"_n,
-        "newaccount"_n,
-        std::make_tuple(get_self(), new_account, owner_authority, active_authority )
-    ).send();
-
-    //buy resources
-    //ram_amount + net_amount + cpu_amount
-    action(
-        permission_level{ get_self(), "owner"_n },
-        "eosio"_n,
-        "delegatebw"_n,
-        std::make_tuple(get_self(), new_account, net_amount, cpu_amount, transfer_bw )
-    ).send();
-
-    action(
-        permission_level{ get_self(), "owner"_n },
-        "eosio"_n,
-        "buyram"_n,
-        std::make_tuple(get_self(), new_account, ram_amount )
-    ).send();
-    //add new account to the child account table
-    action(
-        permission_level{ get_self(), "owner"_n },
-        get_self(),
-        "addchildac"_n,
-        std::make_tuple(new_account, parent, module_name )
-    ).send();
-}
-*/
-
-/*
-ACTION daclifycore::addchildac(name account, name parent, name module_name){
-  require_auth(get_self() );
-  check(is_account(account), "The account doesn't exist.");
-  //check if account already a child
-  childaccounts_table _childaccounts(get_self(), get_self().value);
-  auto itr = _childaccounts.find(account.value);
-  check(itr == _childaccounts.end(), "Account is already registered as child.");
-
-  //check if parent is valid
-  parent = parent == name(0) ? get_self() : parent;
-  if(parent != get_self() ){
-    itr = _childaccounts.find(parent.value);
-    check(itr != _childaccounts.end(), "Parent account is not a child.");
-  }
-
-  //check if module name already exists
-  if(module_name != name(0) ){
-    auto by_module_name = _childaccounts.get_index<"bymodulename"_n>();
-    auto itr2 = by_module_name.find(module_name.value);
-    check(itr2 == by_module_name.end(), "Duplicate module name.");
-  }
-
-  _childaccounts.emplace( get_self(), [&]( auto& n){
-      n.account_name = account;
-      n.parent = parent;
-      n.module_name = module_name;
-  });
-}
-*/
-/*
-ACTION daclifycore::remchildac(name account){
-  require_auth(get_self() );
-  childaccounts_table _childaccounts(get_self(), get_self().value);
-  auto itr = _childaccounts.find(account.value);
-  check(itr != _childaccounts.end(), "Account is not a child.");
-  _childaccounts.erase(itr);
-}
-*/
-
-
 //notify transfer handler
 void daclifycore::on_transfer(name from, name to, asset quantity, string memo){
 
-  check(quantity.amount > 0, "Transfer amount must be greater then zero.");
-  check(to != from, "Invalid transfer");
+  check(quantity.amount > 0, "Transfer amount must be greater then zero");
+  check(to != from, "Invalid transfer.");
 
   extended_asset extended_quantity = extended_asset(quantity, get_first_receiver());
   groupconf conf = get_group_conf();
