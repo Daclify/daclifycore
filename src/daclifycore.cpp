@@ -88,12 +88,26 @@ ACTION daclifycore::propose(name proposer, string title, string description, vec
   //messagebus(name sender_group, name event, string message)
 
     string msg  = "New proposal by "+proposer.to_string();
+    
     action(
         permission_level{ get_self(), "owner"_n },
         conf.hub_account,
         "messagebus"_n,
         std::make_tuple(get_self(), name("propose"), msg, vector<name>{} ) //name sender_group, name event, string message, vector<name> receivers
     ).send();
+    
+  
+/*
+    std::vector<char> data;
+    action(
+        permission_level{ get_self(), "owner"_n },
+        conf.hub_account,
+        "messagebus2"_n,
+        std::make_tuple(get_self(), name("propose"), msg, vector<name>{name("croneosdac22")}, data)
+    ).send();
+
+*/
+    
   }
 
   hookmanager(name("propose"), get_self() );
