@@ -518,6 +518,16 @@
             ]
         },
         {
+            "name": "offchain",
+            "base": "",
+            "fields": [
+                {
+                    "name": "description",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "pair_name_string",
             "base": "",
             "fields": [
@@ -951,6 +961,11 @@
         {
             "name": "manthreshold",
             "type": "manthreshold",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "offchain",
+            "type": "offchain",
             "ricardian_contract": ""
         },
         {

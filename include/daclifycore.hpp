@@ -89,6 +89,7 @@ CONTRACT daclifycore : public contract {
 
     ACTION propose(name proposer, string title, string description, vector<action> actions, time_point_sec expiration);
     ACTION approve(name approver, uint64_t id);
+    ACTION offchain(const string&  description);
     ACTION unapprove(name unapprover, uint64_t id);
     ACTION cancel(name canceler, uint64_t id);
     ACTION exec(name executer, uint64_t id);
@@ -289,6 +290,7 @@ CONTRACT daclifycore : public contract {
     //functions//
     groupconf get_group_conf();
     bool is_account_voice_wrapper(const name& account);
+    string get_account_type(const name& account);
     void update_owner_maintainance(const permission_level& maintainer);
     //action whitelist stuff
     

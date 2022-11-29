@@ -138,6 +138,10 @@ ACTION daclifycore::approve(name approver, uint64_t id) {
 }
 
 
+ACTION daclifycore::offchain(const string&  description) {
+  ;
+}
+
 ACTION daclifycore::unapprove(name unapprover, uint64_t id) {
   require_auth(unapprover);
   check(is_custodian(unapprover, true, true), "You can't unapprove because you are not a custodian.");
