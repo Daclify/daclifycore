@@ -89,6 +89,7 @@ CONTRACT daclifycore : public contract {
 
     ACTION propose(name proposer, string title, string description, vector<action> actions, time_point_sec expiration);
     ACTION approve(name approver, uint64_t id);
+    ACTION offchain(const string&  description);
     ACTION unapprove(name unapprover, uint64_t id);
     ACTION cancel(name canceler, uint64_t id);
     ACTION exec(name executer, uint64_t id);
