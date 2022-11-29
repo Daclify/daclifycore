@@ -59,7 +59,6 @@ void daclifycore::update_custodian_count(int delta){
   _corestate.set(state, get_self());
 }
 
-
 bool daclifycore::is_account_voice_wrapper(const name& account){
   //if config voice only do stuff
   return is_account(account);
