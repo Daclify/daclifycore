@@ -59,42 +59,10 @@ void daclifycore::update_custodian_count(int delta){
   _corestate.set(state, get_self());
 }
 
-string daclifycore::get_account_type(const name& account) {
-  // default result
-  string user_account_type = "e";
-
-  // first determine which contract we consult - if we have set an alternative
-  // contract then use that one
-  name verification_contract = name(get_parameter(name("verifyacct")));
-
-  // access the verification table
-  usersinfo verification_table(verification_contract,
-                               verification_contract.value);
-  auto verification_iterator = verification_table.find(user.value);
-
-  if (verification_iterator != verification_table.end()) {
-    // record found, so default account_type is 'd', unless we find a
-    // verification
-    user_account_type = "d";
-
-    auto kyc_prov = verification_iterator->kyc;
-
-    for (int i = 0; i < kyc_prov.size(); i++) {
-      size_t fn_pos = kyc_prov[i].kyc_level.find("firstname");
-      size_t ln_pos = kyc_prov[i].kyc_level.find("lastname");
-
-      if (fn_pos != std::string::npos && ln_pos != std::string::npos) {
-        user_account_type = "v";
-        break;
-      }
-    }
-  }
-}
 
 bool daclifycore::is_account_voice_wrapper(const name& account){
-
   //if config voice only do stuff
-  return is_account(account) && get_account_type(account) == "v";
+  return is_account(account);
 }
 
 bool daclifycore::is_custodian(const name& account, const bool& update_last_active, const bool& check_if_alive) {

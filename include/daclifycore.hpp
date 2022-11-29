@@ -290,7 +290,6 @@ CONTRACT daclifycore : public contract {
     //functions//
     groupconf get_group_conf();
     bool is_account_voice_wrapper(const name& account);
-    string get_account_type(const name& account);
     void update_owner_maintainance(const permission_level& maintainer);
     //action whitelist stuff
     
