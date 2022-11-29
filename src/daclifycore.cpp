@@ -137,9 +137,10 @@ ACTION daclifycore::approve(name approver, uint64_t id) {
   hookmanager(name("approve"), get_self() );
 }
 
-
+// This action does nothing except collect the description string
+// It allows the creation of a proposal containing an offchain activity
 ACTION daclifycore::offchain(const string&  description) {
-  ;
+  hookmanager(name("offchain"), get_self() );
 }
 
 ACTION daclifycore::unapprove(name unapprover, uint64_t id) {
