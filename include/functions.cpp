@@ -1,3 +1,8 @@
+/**
+ * Returns the configuration (groupconf struct) from the coreconf table
+ * 
+ * @return The groupconf struct is being returned.
+ */
 daclifycore::groupconf daclifycore::get_group_conf(){
   //groupconf conf;
   //return conf;
@@ -6,6 +11,13 @@ daclifycore::groupconf daclifycore::get_group_conf(){
   return setting.conf;
 }
 
+/**
+ * is_member checks if a specified account is a member
+ * 
+ * @param accountname the account name of the account you want to check
+ * 
+ * @return true if the account is a member, otherwise false
+ */
 bool daclifycore::is_member(const name& accountname){
   if(accountname.value == 0 ){
     return false;
@@ -26,6 +38,13 @@ bool daclifycore::is_member(const name& accountname){
 
 }
 
+/**
+ * has_module checks if a module exists in the `modules` table
+ * 
+ * @param module_name The name of the module to look for
+ * 
+ * @return true if the module exists, otherwise false
+ */
 bool daclifycore::has_module(const name& module_name){
   modules_table _modules(get_self(), get_self().value);
   auto itr = _modules.find(module_name.value);
@@ -43,6 +62,11 @@ bool daclifycore::member_has_balance(const name& accountname){
 }
 
 
+/**
+ * Updates the member count in the corestate table
+ * 
+ * @param delta The amount to change the member count by.
+ */
 void daclifycore::update_member_count(int delta){
 
   corestate_table _corestate(get_self(), get_self().value);
@@ -51,6 +75,11 @@ void daclifycore::update_member_count(int delta){
   _corestate.set(state, get_self());
 }
 
+/**
+ * Updates the custodian count in the corestate table
+ * 
+ * @param delta The amount to add to the custodian count.
+ */
 void daclifycore::update_custodian_count(int delta){
 
   corestate_table _corestate(get_self(), get_self().value);
@@ -59,11 +88,29 @@ void daclifycore::update_custodian_count(int delta){
   _corestate.set(state, get_self());
 }
 
+/**
+ * Checks if the account is a valid account.
+ * 
+ * @param account the account to check
+ * 
+ * @return returns true if account is valid, otherwise false
+ */
 bool daclifycore::is_account_voice_wrapper(const name& account){
   //if config voice only do stuff
   return is_account(account);
 }
 
+/**
+ * `is_custodian` checks if the account is a custodian, and if it is, it checks if the account is
+ * alive, and if it is, it updates the last active time
+ * 
+ * @param account the account you want to check
+ * @param update_last_active If true, the last_active field of the custodian will be updated to the
+ * current time.
+ * @param function to check if the account is alive.
+ * 
+ * @return false if account is not a custodian
+ */
 bool daclifycore::is_custodian(const name& account, const bool& update_last_active, const bool& check_if_alive) {
 
   custodians_table _custodians(get_self(), get_self().value);
@@ -84,6 +131,11 @@ bool daclifycore::is_custodian(const name& account, const bool& update_last_acti
   }
 }
 
+/**
+ * Updates the last_active field of the custodian's record in the custodians table
+ * 
+ * @param account the account name of the custodian to update
+ */
 void daclifycore::update_custodian_last_active(const name& account){
   custodians_table _custodians(get_self(), get_self().value);
   auto cust_itr = _custodians.find(account.value);
@@ -93,6 +145,14 @@ void daclifycore::update_custodian_last_active(const name& account){
   });
 }
 
+/**
+ * is_account_alive checks if a custodian is still active (alive)
+ * 
+ * @param last_active The last time the account was active.
+ * 
+ * @return true if the custodian account is still alive, i.e. has
+ * performed activities within the timeout period (inactivate_cust_after_sec) specified in the configuration
+ */
 bool daclifycore::is_account_alive(time_point_sec last_active){
   
   bool is_alive = (last_active == time_point_sec(0) );
@@ -105,10 +165,17 @@ bool daclifycore::is_account_alive(time_point_sec last_active){
 }
 
 
-//TODO
+/**
+ * @todo Develop update_custodian_weight function
+ */
 void daclifycore::update_custodian_weight(const name& account, const uint8_t& weight) {}
-//TODO
 
+/**
+ * Updates the owner authority of the contract to include the maintainer account, if it exists, and
+ * the active authority of the contract
+ * 
+ * @param maintainer The account that will be added to the owner authority.
+ */
 void daclifycore::update_owner_maintainance(const permission_level& maintainer){
   vector<eosiosystem::permission_level_weight> accounts;
 
@@ -152,6 +219,9 @@ void daclifycore::update_owner_maintainance(const permission_level& maintainer){
 
 }
 
+/**
+ * Updates the active authority of the contract to the active custodians
+ */
 void daclifycore::update_active() {
 
   custodians_table _custodians(get_self(), get_self().value);
@@ -205,6 +275,13 @@ void daclifycore::update_active() {
   insert_or_update_or_delete_threshold(name("default"), default_threshold, false, true);
 }
 
+/**
+ * Subtracts the asset value from the balance of the account
+ * 
+ * @param account The account to debit
+ * @param value The amount of the (extended) asset to be subtracted from the balance.
+ * 
+ */
 void daclifycore::sub_balance( const name& account, const extended_asset& value) {
 
    balances_table _balances( get_self(), account.value);
@@ -226,6 +303,12 @@ void daclifycore::sub_balance( const name& account, const extended_asset& value)
 }
 
 
+/**
+ * Adds the balance of the `extended_asset` to the `balances_table` of the account
+ * 
+ * @param account The account to add the balance to.
+ * @param value The amount of the asset to add to the balance.
+ */
 void daclifycore::add_balance( const name& account, const extended_asset& value){
   //uint128_t composite_id = (uint128_t{value.contract.value} << 64) | value.quantity.symbol.raw();
    balances_table _balances( get_self(), account.value);
@@ -246,6 +329,13 @@ void daclifycore::add_balance( const name& account, const extended_asset& value)
    }
 }
 
+/**
+ * Checks if a threshold name exists in the thresholds table.
+ * 
+ * @param threshold_name The name of the threshold to check for.
+ * 
+ * @return true if the threshold name exists
+ */
 bool daclifycore::is_existing_threshold_name(const name& threshold_name){
   thresholds_table _thresholds(get_self(), get_self().value);
   auto thresh_itr = _thresholds.find(threshold_name.value);
@@ -257,6 +347,14 @@ bool daclifycore::is_existing_threshold_name(const name& threshold_name){
   }
 }
 
+/**
+ * If the threshold_name is found in the thresholds table, return the threshold value. If not, return
+ * the default threshold value
+ * 
+ * @param threshold_name The name of the threshold to look for.
+ * 
+ * @return The threshold value for the given threshold name, or default threshold if not found.
+ */
 uint8_t daclifycore::get_threshold_by_name(const name& threshold_name){
   thresholds_table _thresholds(get_self(), get_self().value);
   auto thresh_itr = _thresholds.find(threshold_name.value);
@@ -268,6 +366,16 @@ uint8_t daclifycore::get_threshold_by_name(const name& threshold_name){
   }
 }
 
+/**
+ * Inserts or updates (or deletes) a threshold
+ * 
+ * @param threshold_name The name of the threshold you want to insert, update or delete.
+ * @param threshold The threshold value.
+ * @param remove If true, the threshold will be removed.
+ * @param privileged This is a boolean that determines whether the action is privileged or not.
+ * 
+ * @return a vector of the custodians that are linked to the threshold.
+ */
 void daclifycore::insert_or_update_or_delete_threshold(const name& threshold_name, const int8_t& threshold, const bool& remove, const bool& privileged){
    thresholds_table _thresholds(get_self(), get_self().value);
    auto thresh_itr = _thresholds.find(threshold_name.value);
@@ -312,6 +420,14 @@ void daclifycore::insert_or_update_or_delete_threshold(const name& threshold_nam
    }
 }
 
+/**
+ * `is_threshold_linked` returns true if the specified threshold name is linked to a threshold in
+ * the `threshlinks` table
+ * 
+ * @param threshold_name The name of the threshold you want to check.
+ * 
+ * @return a boolean value.
+ */
 bool daclifycore::is_threshold_linked(const name& threshold_name){
   threshlinks_table _threshlinks(get_self(), get_self().value);
   auto by_threshold = _threshlinks.get_index<"bythreshold"_n>(); 
@@ -324,7 +440,15 @@ bool daclifycore::is_threshold_linked(const name& threshold_name){
   }
 }
 
-//
+
+/**
+ * It returns the threshold name and value for a given contract and action name
+ * 
+ * @param contract the name of the contract
+ * @param action_name the name of the action
+ * 
+ * @return A struct containing the name of the threshold and the value of the threshold.
+ */
 daclifycore::threshold_name_and_value daclifycore::get_required_threshold_name_and_value_for_contract_action(const name& contract, const name& action_name){
   
   threshlinks_table _threshlinks(get_self(), get_self().value);
@@ -359,6 +483,14 @@ daclifycore::threshold_name_and_value daclifycore::get_required_threshold_name_a
 }
 
 
+/**
+ * It takes a proposal table iterator as an argument and returns the total weight of all the approved
+ * custodians
+ * 
+ * @param prop_itr The proposal iterator
+ * 
+ * @return The total weight of all the approved custodians for a given proposal.
+ */
 uint8_t daclifycore::get_total_approved_proposal_weight(proposals_table::const_iterator& prop_itr){
   uint8_t total_weight = 0;
   if(prop_itr->approvals.size()==0){
@@ -377,6 +509,13 @@ uint8_t daclifycore::get_total_approved_proposal_weight(proposals_table::const_i
   }
 }
 
+/**
+ * It archives a proposal by moving it from the active proposals table to the history table
+ * 
+ * @param archive_type The name of the table to archive the proposal from.
+ * @param idx the table index to be archived
+ * @param prop_itr the iterator to the proposal to be archived
+ */
 void daclifycore::archive_proposal(const name& archive_type, proposals_table& idx, proposals_table::const_iterator& prop_itr){
 
   uint8_t keep_history = get_group_conf().proposal_archive_size;
