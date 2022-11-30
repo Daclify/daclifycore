@@ -1,6 +1,16 @@
 #include <daclifycore.hpp>
 #include <functions.cpp>
 
+/**
+ * updateconf updates the configuration of the contract
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param new_conf The new configuration to be set.
+ * @param remove If true, the configuration will be removed.
+ * 
+ * @return The action is returning nothing.
+ */
 ACTION daclifycore::updateconf(groupconf new_conf, bool remove){
     require_auth(get_self());
 
@@ -18,7 +28,18 @@ ACTION daclifycore::updateconf(groupconf new_conf, bool remove){
 }
 
 
-///////////////////////////////////
+
+/**
+ * propose action allows a custodian to propose a group action
+ * 
+ * @pre requires the authority of the proposer
+ * 
+ * @param proposer the account proposing the action
+ * @param title The title of the proposal
+ * @param description The description of the proposal
+ * @param actions a vector of actions that will be executed if the proposal is approved.
+ * @param expiration The time at which the proposal will expire.
+ */
 ACTION daclifycore::propose(name proposer, string title, string description, vector<action> actions, time_point_sec expiration) {
   require_auth(proposer);
 
@@ -113,7 +134,16 @@ ACTION daclifycore::propose(name proposer, string title, string description, vec
   hookmanager(name("propose"), get_self() );
 
 }
-//////////////
+
+
+/**
+ * approve action adds the approver to the proposal's approvals list, and then calls the hookmanager
+ * 
+ * @pre requires the authority of the approver
+ * 
+ * @param approver The account that is approving the proposal.
+ * @param id The proposal id.
+ */
 ACTION daclifycore::approve(name approver, uint64_t id) {
   require_auth(approver);
   check(is_custodian(approver, true, true), "You can't approve because you are not a custodian.");
@@ -137,12 +167,24 @@ ACTION daclifycore::approve(name approver, uint64_t id) {
   hookmanager(name("approve"), get_self() );
 }
 
-// This action does nothing except collect the description string
-// It allows the creation of a proposal containing an offchain activity
+/**
+ * offchain action does nothing except collect the offchain task description string
+ * It allows the creation of a proposal containing an offchain activity
+ * 
+ * @param description A string that describes the off-chain activity.
+ */
 ACTION daclifycore::offchain(const string&  description) {
   hookmanager(name("offchain"), get_self() );
 }
 
+/**
+ * unapprove action removes the unapprover from the list of approvals for the proposal
+ * 
+ * @pre requires the authority of the unapprover
+ * 
+ * @param unapprover The account that is unapproving the proposal.
+ * @param id The id of the proposal.
+ */
 ACTION daclifycore::unapprove(name unapprover, uint64_t id) {
   require_auth(unapprover);
   check(is_custodian(unapprover, true, true), "You can't unapprove because you are not a custodian.");
@@ -171,6 +213,15 @@ ACTION daclifycore::unapprove(name unapprover, uint64_t id) {
 
 
 
+/**
+ * cancel action allows the proposer to cancel a proposal, or the contract to cancel a proposal if it's been
+ * inactive for more than `max_inactive_proposal_time` seconds
+ * 
+ * @pre requires the authority of the core contract or the canceler
+ * 
+ * @param canceler the account that is cancelling the proposal.
+ * @param id the proposal id
+ */
 ACTION daclifycore::cancel(name canceler, uint64_t id) {
 
   
@@ -193,6 +244,15 @@ ACTION daclifycore::cancel(name canceler, uint64_t id) {
   hookmanager(name("cancel"), get_self() );
 }
 
+/**
+ * exec action checks if the proposal has expired, if it has enough votes, and if so, it executes the actions in
+ * the proposal
+ * 
+ * @pre requires the authority of the executer
+ * 
+ * @param executer the account that executes the proposal.
+ * @param id the proposal id
+ */
 ACTION daclifycore::exec(name executer, uint64_t id) {
   require_auth(executer);
   proposals_table _proposals(get_self(), get_self().value);
@@ -225,6 +285,13 @@ ACTION daclifycore::exec(name executer, uint64_t id) {
   hookmanager(name("exec"), get_self() );
 }
 
+/**
+ * invitecust action allows the group to invite a new custodian
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param account The account to invite as a custodian.
+ */
 ACTION daclifycore::invitecust(name account){
   require_auth(get_self() );
   check(account != get_self(), "Self can't be a custodian.");
@@ -267,6 +334,13 @@ ACTION daclifycore::invitecust(name account){
 
 }
 
+/**
+ * removecust action removes a custodian from the custodian table
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param account The account to remove as a custodian.
+ */
 ACTION daclifycore::removecust(name account){
   require_auth(get_self());
 
@@ -287,6 +361,13 @@ ACTION daclifycore::removecust(name account){
   hookmanager(name("removecust"), get_self() );
 }
 
+/**
+ * imalive action allows a custodian to prove they are still active (alive)
+ * 
+ * @pre requires the authority of the custodian
+ * 
+ * @param account The account that is calling the action.
+ */
 ACTION daclifycore::imalive(name account){
   require_auth(account);
   custodians_table _custodians(get_self(), get_self().value);
@@ -302,6 +383,11 @@ ACTION daclifycore::imalive(name account){
   hookmanager(name("imalive"), get_self() );
 }
 
+/**
+ * This function is called by the elections contract to set the custodians of the group
+ * 
+ * @param accounts a vector of account names that will be the new custodians
+ */
 ACTION daclifycore::isetcusts(vector<name> accounts){
   
   //require_auth(get_self() );
@@ -362,6 +448,17 @@ ACTION daclifycore::isetcusts(vector<name> accounts){
 
 }
 
+/**
+ * withdraw action withdraws an amount of an asset from the user account.
+ * It takes an account name and an extended asset, checks that the account is not the contract itself,
+ * that the amount is greater than zero, and that withdrawals are enabled. Then it sends a transfer
+ * action to the contract that issued the asset
+ * 
+ * @pre requires the authority of the user
+ * 
+ * @param account The account that is withdrawing
+ * @param amount The amount of tokens to withdraw.
+ */
 ACTION daclifycore::widthdraw(name account, extended_asset amount) {
   require_auth(account);
   check(get_group_conf().withdrawals, "Withdrawals are disabled");
@@ -378,6 +475,16 @@ ACTION daclifycore::widthdraw(name account, extended_asset amount) {
   hookmanager(name("widthdraw"), get_self() );
 }
 
+/**
+ * internalxfr action allows members to transfer tokens to other members
+ * 
+ * @pre requires the authority of the 'from' account
+ * 
+ * @param from The account that is sending the funds.
+ * @param to The account that will receive the funds.
+ * @param amount The amount of tokens to transfer.
+ * @param msg The message that will be displayed in the transaction memo.
+ */
 ACTION daclifycore::internalxfr(name from, name to, extended_asset amount, string msg){
   require_auth(from);
   groupconf conf = get_group_conf();
@@ -390,11 +497,30 @@ ACTION daclifycore::internalxfr(name from, name to, extended_asset amount, strin
   hookmanager(name("internalxfr"), get_self() );
 }
 
+/**
+ * manthreshold action allows the contract owner to set or remove a threshold
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param threshold_name The name of the threshold.
+ * @param threshold the threshold value to be set
+ * @param remove true if you want to remove the threshold, false if you want to add it.
+ */
 ACTION daclifycore::manthreshold(name threshold_name, int8_t threshold, bool remove){
   require_auth(get_self() );
   insert_or_update_or_delete_threshold(threshold_name, threshold, remove, false);//!!!!!!!!!!!!! false
 }
 
+/**
+ * manthreshlin action adds or removes a threshold link between a contract and an action
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param contract The account that owns the action.
+ * @param action_name The name of the action to be linked to the threshold.
+ * @param threshold_name The name of the threshold to assign to the action.
+ * @param remove true to remove the link, false to add it.
+ */
 ACTION daclifycore::manthreshlin(name contract, name action_name, name threshold_name, bool remove){
   require_auth(get_self() );
 
@@ -436,6 +562,14 @@ ACTION daclifycore::manthreshlin(name contract, name action_name, name threshold
   }
 }
 
+/**
+ * trunchistory action deletes the oldest proposals from the history table
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param archive_type The name of the scope to clear.
+ * @param batch_size The number of proposals to delete in a single transaction.
+ */
 ACTION daclifycore::trunchistory( name archive_type, uint32_t batch_size){
   require_auth(get_self() );
   check(archive_type != get_self(), "Not allowed to clear this scope.");
@@ -449,6 +583,13 @@ ACTION daclifycore::trunchistory( name archive_type, uint32_t batch_size){
   }
 }
 
+/**
+ * regmember action registers an account as a member of the DAC
+ * 
+ * @pre requires the authority of the member account
+ * 
+ * @param actor The accountname of the member to be registered.
+ */
 ACTION daclifycore::regmember(name actor){
   require_auth(actor);
   groupconf conf = get_group_conf();
@@ -467,6 +608,14 @@ ACTION daclifycore::regmember(name actor){
   hookmanager(name("regmember"), get_self() );
 }
 
+/**
+ * signuserterm action allows a member to agree or disagree with the latest userterms version
+ * 
+ * @pre requires the authority of the member account
+ * 
+ * @param member The account name of the member who is signing the user terms.
+ * @param agree_terms true if the user agrees to the terms, false if they do not.
+ */
 ACTION daclifycore::signuserterm(name member, bool agree_terms){
   require_auth(member);
   groupconf conf = get_group_conf();
@@ -500,6 +649,13 @@ ACTION daclifycore::signuserterm(name member, bool agree_terms){
 }
 
 
+/**
+ * unregmember action removes a member from the members table
+ * 
+ * @pre requires the authority of the member (actor) account
+ * 
+ * @param actor The accountname of the member to unregister.
+ */
 ACTION daclifycore::unregmember(name actor){
   require_auth(actor);
   check(!member_has_balance(actor),"Member has positive balance, withdraw first.");
@@ -511,6 +667,14 @@ ACTION daclifycore::unregmember(name actor){
   hookmanager(name("unregmember"), get_self() );
 }
 
+/**
+ * updateavatar action updates the user's avatar to the link provided
+ * 
+ * @pre requires the authority of the user (actor) account
+ * 
+ * @param actor The account that is calling the action.
+ * @param img_url The URL of the image to be stored.
+ */
 ACTION daclifycore::updateavatar(name actor, string img_url){
   require_auth(actor);
   check(img_url.rfind("https://", 0) == 0, "Url must be https://");
@@ -531,6 +695,15 @@ ACTION daclifycore::updateavatar(name actor, string img_url){
   }
 }
 
+/**
+ * updatprofile action updates a field in the user's profile with the string provided
+ * 
+ * @pre requires the authority of the user (actor) account
+ * 
+ * @param actor The account that is updating the profile.
+ * @param key the key of the data you want to update.
+ * @param data The data to be stored.
+ */
 ACTION daclifycore::updatprofile(name actor, name key, string data){
   require_auth(actor);
   //check(is_member(actor), "Must be a member before updating profile." );
@@ -553,6 +726,13 @@ ACTION daclifycore::updatprofile(name actor, name key, string data){
   }
 }
 
+/**
+ * delprofile action deletes the profile data and avatar data of the actor.
+ * 
+ * @pre requires the authority of the user (actor) account
+ * 
+ * @param actor The account name of the user who is deleting their profile.
+ */
 ACTION daclifycore::delprofile(name actor){
   require_auth(actor);
   profiledata_table _profiledata(get_self(), get_self().value);
@@ -568,6 +748,16 @@ ACTION daclifycore::delprofile(name actor){
   }
 }
 
+/**
+ * linkmodule action creates a new row in the modules table, and stores the module name, the parent contract, the
+ * slave permission, and whether or not the module has a contract
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param module_name The name of the module.
+ * @param slave_permission The permission level of the module contract.
+ * @param has_contract If the module is a contract, set this to true. If not, set this to false.
+ */
 ACTION daclifycore::linkmodule(name module_name, permission_level slave_permission, bool has_contract){
   require_auth(get_self() );
   modules_table _modules(get_self(), get_self().value);
@@ -587,6 +777,13 @@ ACTION daclifycore::linkmodule(name module_name, permission_level slave_permissi
   hookmanager(name("linkmodule"), get_self() );
 }
 
+/**
+ * unlinkmodule action removes a module from the modules table
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param module_name The name of the module to be unlinked.
+ */
 ACTION daclifycore::unlinkmodule(name module_name){
   require_auth(get_self() );
   modules_table _modules(get_self(), get_self().value);
@@ -596,6 +793,16 @@ ACTION daclifycore::unlinkmodule(name module_name){
   hookmanager(name("unlinkmodule"), get_self() );
 }
 
+/**
+ * This function allows the contract owner to set the components of a frame, and the data associated
+ * with the frame
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param frame_id the id of the frame
+ * @param comp_ids a vector of component ids that are part of this frame
+ * @param data the data to be stored in the table
+ */
 ACTION daclifycore::setuiframe(uint64_t frame_id, vector<uint64_t>comp_ids, string data){
   require_auth(get_self() );
   uiframes_table _uiframes(get_self(), get_self().value);
@@ -621,7 +828,20 @@ ACTION daclifycore::setuiframe(uint64_t frame_id, vector<uint64_t>comp_ids, stri
 
 }
 
-//interface for payroll
+
+/**
+ * ipayroll action is a function that allows any module to call the payroll interface
+ * 
+ * @param sender_module_name the name of the module that is calling the payroll interface.
+ * @param payroll_tag a unique name for the payroll
+ * @param payments a vector of payment structs, which are defined in the payroll contract.
+ * @param memo a string that will be added to the memo of the transaction
+ * @param due_date The date when the payroll should be paid.
+ * @param repeat 0 = no repeat, 1 = repeat once, 2 = repeat twice, etc.
+ * @param recurrence_sec The number of seconds between each payment.
+ * @param auto_pay If true, the payroll will be paid automatically. If false, the payroll will be paid
+ * manually.
+ */
 ACTION daclifycore::ipayroll(
                       name sender_module_name, 
                       name payroll_tag, 
@@ -660,14 +880,31 @@ ACTION daclifycore::ipayroll(
   
 }
 
-//this action just adds content to the action trace
+/**
+ * fileupload action adds content to the action trace
+ * 
+ * @pre requires the authority of the uploader account
+ * 
+ * @param uploader The account that is uploading the file.
+ * @param file_scope The scope of the file. This is the name of the account that owns the file.
+ * @param content The content of the file.
+ */
 ACTION daclifycore::fileupload(name uploader, name file_scope, string content){
   require_auth(uploader);
   check(file_scope.value != 0, "must supply a non empty file_scope");
   check(content.size() != 0, "Content can't be empty");
 }
 
-//this action populates the dacfiles table with upload references
+/**
+ * filepublish action populates the dacfiles table with upload references
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param file_scope The scope of the file. This is the name of the account that owns the file.
+ * @param title The title of the file
+ * @param trx_id The transaction id of the uploaded file.
+ * @param block_num The block number of the transaction that uploaded the file.
+ */
 ACTION daclifycore::filepublish(name file_scope, string title, checksum256 trx_id, uint32_t block_num){
   require_auth(get_self() );
   check(file_scope.value != 0, "must supply a non empty file_scope");
@@ -686,6 +923,14 @@ ACTION daclifycore::filepublish(name file_scope, string title, checksum256 trx_i
   hookmanager(name("filepublish"), get_self() );
 }
 
+/**
+ * filedelete action deletes a file from the dacfiles table
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param file_scope The scope of the file. This is the name of the table.
+ * @param id the id of the file to delete
+ */
 ACTION daclifycore::filedelete(name file_scope, uint64_t id){
   require_auth(get_self() );
   dacfiles_table _dacfiles(get_self(), file_scope.value);
@@ -696,7 +941,20 @@ ACTION daclifycore::filedelete(name file_scope, uint64_t id){
 }
 
 
-//notify transfer handler
+/**
+ * asset-transfer notification handler
+ * 
+ * If the transfer is incoming, it will either add to the group wallet or to a user wallet if the memo
+ * is correct. If the transfer is outgoing, it will either withdraw from the group wallet or from a
+ * user wallet if the memo is correct
+ * 
+ * @param from The account that sent the transfer.
+ * @param to The account that is receiving the funds.
+ * @param quantity The amount of tokens being transferred.
+ * @param memo The memo is a string that is attached to the transfer. It can be used to store
+ * additional information about the transfer.
+ * 
+ */
 void daclifycore::on_transfer(name from, name to, asset quantity, string memo){
 
   check(quantity.amount > 0, "Transfer amount must be greater then zero");
@@ -742,6 +1000,13 @@ void daclifycore::on_transfer(name from, name to, asset quantity, string memo){
 
 //dev
 
+/**
+ * clearbals action clears the balances table for a given scope.
+ * 
+ * @pre requires the authority of the core contract
+ * 
+ * @param scope The scope of the table.
+ */
 ACTION daclifycore::clearbals(name scope){
   require_auth(get_self());
   balances_table _balances( get_self(), scope.value);
